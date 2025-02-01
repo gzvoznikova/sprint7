@@ -30,4 +30,5 @@ class TestCreateOrder:
         }
 
         response = requests.post(orders_list_endpoint, json=payload)
-        assert response.status_code == 201 and 'track' in response.json()
+        assert response.status_code == 201
+        assert 'track' in response.json()

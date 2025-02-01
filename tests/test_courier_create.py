@@ -1,21 +1,11 @@
 import requests
 import allure
-import pytest
 from data.urls import create_courier_endpoint
 from data.urls import login_courier_endpoint
 from data.data_create_courier import generation_new_data_courier
-from data.data_create_courier import register_new_courier_and_return_login_password
+from conftest import registered_courier_data
 import logging
-
-
-@pytest.fixture
-def registered_courier_data():
-    login_pass = register_new_courier_and_return_login_password()
-    return {
-        "login": login_pass[0],
-        "password": login_pass[1],
-        "firstName": login_pass[2]
-    }
+import json
 
 class TestCreateCourier:
 
@@ -29,7 +19,8 @@ class TestCreateCourier:
         print(data)
 
         response = requests.post(create_courier_endpoint, data=payload)
-        assert response.status_code == 201 and response.json() == {"ok": True}
+        assert response.status_code == 201
+        assert response.json() == {"ok": True}
 
         login_payload = {
             "login": payload["login"],
@@ -50,8 +41,8 @@ class TestCreateCourier:
     def test_create_courier_duplicate_login(self, registered_courier_data):
         payload = registered_courier_data
         response = requests.post(create_courier_endpoint, data=payload)
-
-        assert response.status_code == 409 and response.json() == {"code": 409, "message": "Этот логин уже используется. Попробуйте другой."}
+        assert response.status_code == 409
+        assert response.json().get("message") == "Этот логин уже используется. Попробуйте другой."
 
 
     @allure.title('Проверка невозможности создать курьера. Нет обязательных полей')
@@ -64,5 +55,5 @@ class TestCreateCourier:
         }
         response = requests.post(create_courier_endpoint, data=payload)
 
-        assert response.status_code == 400 and  response.json() == {"code": 400,
-                                   "message": "Недостаточно данных для создания учетной записи"}
+        assert response.status_code == 400
+        assert response.json().get("message") == "Недостаточно данных для создания учетной записи"

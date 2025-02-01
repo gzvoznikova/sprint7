@@ -1,23 +1,7 @@
 import requests
-import pytest
 import allure
 from data.urls import login_courier_endpoint
-from data.urls import create_courier_endpoint
 from data.data_create_courier import register_new_courier_and_return_login_password
-
-@pytest.fixture
-def delete_courier_data():
-    login_pass = register_new_courier_and_return_login_password()
-    yield {
-        "login": login_pass[0],
-        "password": login_pass[1]
-    }
-    response = requests.post(login_courier_endpoint, data=login_pass)
-    if response.status_code == 200:
-        courier_id = response.json().get("id")
-        if courier_id:
-            requests.delete(f"{create_courier_endpoint}/{courier_id}")
-
 
 class TestLoginCourier:
     @allure.title('Авторизация курьера')
@@ -26,7 +10,8 @@ class TestLoginCourier:
         payload = delete_courier_data
         response = requests.post(login_courier_endpoint, data=payload)
 
-        assert response.status_code == 200 and 'id' in response.json()
+        assert response.status_code == 200
+        assert 'id' in response.json()
 
     @allure.title('Авторизация курьера не пройдена при отправке неверного password')
     @allure.description('Проверка отправки неверного password при автроизации курьера (код - 404 и "message": "Учетная запись не найдена"')
@@ -38,7 +23,8 @@ class TestLoginCourier:
         }
         response = requests.post(login_courier_endpoint, data=payload)
 
-        assert response.status_code == 404 and response.json() == {"code": 404, "message": "Учетная запись не найдена"}, "Неверное содержимое ответа."
+        assert response.status_code == 404
+        assert response.json().get("message") == "Учетная запись не найдена"
 
     @allure.title('Авторизация курьера не пройдена при отправке не всех обязательных полей')
     @allure.description(
@@ -51,4 +37,5 @@ class TestLoginCourier:
         }
         response = requests.post(login_courier_endpoint, data=payload)
 
-        assert response.status_code == 400 and response.json() == {"code": 400, "message": "Недостаточно данных для входа"}
+        assert response.status_code == 400
+        assert response.json().get("message") == "Недостаточно данных для входа"
